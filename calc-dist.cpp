@@ -165,6 +165,7 @@ int main(int argc, char *argv[])
     // Config area
 
     const bool show_transactions{true}; // print transaction details when mortgage or super is updated
+    const bool show_heading_and_months{false};
     const double cpi_pa = XXX;          // Consider using 20+ year average
 
     // Consider long term interest rate_pa, but further REDUCE the rate_pa to account for fees.
@@ -210,10 +211,13 @@ int main(int argc, char *argv[])
               << retired << "\n\n"
               << "Starting strategy: " << strategy.name << "\n\n";
 
-    std::cout << std::format("\n\n{:10}: {:>10} : {:>10}: {:>10}", "Date", mortgage.name(), super.name(), "Net") << "\n";
+    if (show_heading_and_months)
+    {
+        std::cout << std::format("\n\n{:10}: {:>10} : {:>10}: {:>10}", "Date", mortgage.name(), super.name(), "Net") << "\n";
+    }
 
     // Main Monthly loop
-    while (mortgage.balance() + super.balance() >= 0.0)
+    while (true)
     {
         transact_no_indexation(mortgage.balance() < 0.0 ? mortgage : super, strategy.repayment_pm, timestamp, "monthly contribution");
         if (mortgage.balance() > 0.0)
@@ -250,18 +254,28 @@ int main(int argc, char *argv[])
             }
         }
 
-        print_date(std::cout, timestamp);
         double balance = mortgage.balance() + super.balance();
-        std::cout
-            << ": " << std::format("{:10.2f} : {:10.2f}: {:10.2f}", mortgage.balance(), super.balance(), balance) << "\n";
+        if (show_heading_and_months)
+        {
+            print_date(std::cout, timestamp);
+            std::cout
+                << ": " << std::format("{:10.2f} : {:10.2f}: {:10.2f}", mortgage.balance(), super.balance(), balance) << "\n";
+        }
 
         // Only change strategy at end of month when all transfers have been completed.
 
         if (strategy.retirement_balance_requirement && strategy.retirement_balance_requirement && balance > *strategy.retirement_balance_requirement)
         {
-            std::cout << "\nRetirement!!! ================================\n";
+            print_date(std::cout, timestamp);
+            std::cout << "  Retirement starts!!! ================================\n";
             strategy = retired;
             std::cout << strategy << "\n\n";
+        }
+        if (strategy.name == retired.name && balance < 0)
+        {
+            print_date(std::cout, timestamp);
+            std::cout << "  Retirement ends!!! ================================\n";
+            break;
         }
         timestamp = add_month(timestamp);
     }
