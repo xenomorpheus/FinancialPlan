@@ -19,7 +19,7 @@ public:
 
     AmountIndexed &operator+=(const AmountIndexed &rhs)
     {
-        m_amount += rhs.value_at(m_time);
+        amount_ += rhs.value_at(time_);
         return *this;
     }
 
@@ -33,9 +33,9 @@ public:
     double value() const;
 
 private:
-    double m_amount;
-    time_t m_time;
-    double m_cpi_pa;
+    double amount_;
+    time_t time_;
+    double cpi_pa_;
 };
 
 std::ostream &operator<<(std::ostream &os, const AmountIndexed &rhs);
