@@ -44,7 +44,6 @@ public:
     void transact(double amount, time_t time, const std::string &description = "");
 
 private:
-    const double m_seconds_pa{365.25 * 24 * 60 * 60};
     std::string m_name;
     double m_rate_pa;
     double m_balance;

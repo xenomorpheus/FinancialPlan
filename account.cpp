@@ -52,6 +52,7 @@ void Account::transact(double amount, time_t time, const std::string &descriptio
     {
         throw std::runtime_error("Error: time attempted to go backwards");
     }
+    const double m_seconds_pa{365.25 * 24 * 60 * 60};
     double rate_factor_pa = 1 + abs(m_rate_pa / 100.0);
     double part_of_year = (time - m_time) / m_seconds_pa;
     double interest_factor_interval = std::pow(rate_factor_pa, part_of_year) - 1;
