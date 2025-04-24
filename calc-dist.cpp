@@ -164,29 +164,45 @@ int main(int argc, char *argv[])
     //===================================================================
     // Config area
 
-    const bool show_transactions{true}; // print transaction details when mortgage or super is updated
-    const bool show_heading_and_months{false};
-    const double cpi_pa = XXX;          // Consider using 20+ year average
+    constexpr double pay_pa{XXX}; // update by CPI each year
+    constexpr double pay_take_home_pa{XXX}; // after tax and medicare levy
+    constexpr double cpi_pa = XXX; // Consider using 20+ year average
+    constexpr double super_personal_contrib_cap_pa = XXX; // 2024- financial year
+    constexpr double emp_super_rate{XXX}; // 11.5% superannuation
+    constexpr double emp_super_contribution_pa = pay_pa * emp_super_rate;
+    constexpr double super_top_up_pa = super_personal_contrib_cap_pa - emp_super_contribution_pa;
+
+    constexpr bool show_transactions{true}; // print transaction details when mortgage or super is updated
+    constexpr bool show_heading_and_months{true};
+
+    std::cout << std::format("Pay p.a.                    : {:>10.2f}\n", pay_pa);
+    std::cout << std::format("Take home Pay p.a.          : {:>10.2f}\n", pay_take_home_pa);
+    std::cout << std::format("CPI p.a.                    : {:>10.2f}\n", cpi_pa);
+    std::cout << std::format("Super personal contrib cap  : {:>10.2f}\n", super_personal_contrib_cap_pa);
+    std::cout << std::format("Employer Super rate         : {:>10.3f}\n", emp_super_rate);
+    std::cout << std::format("Employer Super contrib p.a. : {:>10.2f}\n", emp_super_contribution_pa);
+    std::cout << std::format("Super top up p.a.           : {:>10.2f}\n", super_top_up_pa);
+
 
     // Consider long term interest rate_pa, but further REDUCE the rate_pa to account for fees.
-    auto mortgage = Account().name("mortgage").rate_pa(-XXX).balance(-XXX'000.0).time(timestamp).show_transaction(show_transactions);
+    auto mortgage = Account().name("mortgage").rate_pa(-XXX).balance(XXX).time(timestamp).show_transaction(show_transactions);
 
-    // Consider long term return rate_pa, but REDUCE the rate_pa to account for fees.
-    auto super = Account().name("super").rate_pa(XXX - XXX).balance(XXX'000.0).time(timestamp).show_transaction(show_transactions);
+    // Consider long term return rate_pa, but further REDUCE the rate_pa to account for fees.
+    auto super = Account().name("super").rate_pa(XXX - XXX).balance(XXX).time(timestamp).show_transaction(show_transactions);
 
     FinancialStrategy employed = {
         .name = "employed",
-        .repayment_pm = std::make_optional<AmountIndexed>(XXX, timestamp, cpi_pa),
-        .emp_super_contribution_pm = std::make_optional<AmountIndexed>(XXX - XXX, timestamp, cpi_pa),
-        .personal_super_contribution_pa = std::make_optional<AmountIndexed>(XXX, timestamp, cpi_pa),
-        .personal_super_contribution_tax_pa = std::make_optional<AmountIndexed>(XXX, timestamp, cpi_pa),
-        .tax_refund_pa = std::make_optional<AmountIndexed>(XXX, timestamp, cpi_pa),
-        .retirement_balance_requirement = XXX,
+        .repayment_pm = std::make_optional<AmountIndexed>(pay_take_home_pa/12.0 - XXX, timestamp, cpi_pa),
+        .emp_super_contribution_pm = std::make_optional<AmountIndexed>(emp_super_contribution_pa/12.0*0.XXX, timestamp, cpi_pa),
+        .personal_super_contribution_pa = std::make_optional<AmountIndexed>(super_top_up_pa, timestamp, cpi_pa),
+        .personal_super_contribution_tax_pa = std::make_optional<AmountIndexed>(super_top_up_pa*-0.XXX, timestamp, cpi_pa),
+        .tax_refund_pa = std::make_optional<AmountIndexed>(super_personal_contrib_cap_pa *.XXX + XXX, timestamp, cpi_pa),
+        .retirement_balance_requirement = XXX,     // XX years at XXXk indexed from 2024.
     };
 
     FinancialStrategy retired = {
         .name = "retired",
-        .retirement_super_transaction_pm = std::make_optional<AmountIndexed>(-XXX.0 / 12.0, timestamp, cpi_pa),
+        .retirement_super_transaction_pm = std::make_optional<AmountIndexed>(-XXX / 12.0, timestamp, cpi_pa),
     };
     //===================================================================
 
@@ -201,9 +217,8 @@ int main(int argc, char *argv[])
 
     FinancialStrategy strategy = employed;
 
-    std::cout << std::format("CPI p.a.     : {:5.2f}\n", cpi_pa);
-    std::cout << std::format("Mortgage Rate: {:5.2f}\n", mortgage.rate_pa());
-    std::cout << std::format("Super    Rate: {:5.2f}\n", super.rate_pa());
+    std::cout << std::format("Mortgage Int. Rate : {:>10.2f}\n", mortgage.rate_pa());
+    std::cout << std::format("Super Int. Rate    : {:>10.2f}\n", super.rate_pa());
 
     std::cout << "\n"
                  "Defining financial strategies:\n\n"

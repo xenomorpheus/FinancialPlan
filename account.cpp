@@ -66,6 +66,6 @@ void Account::transact(double amount, time_t time, const std::string &descriptio
 
     if (std::abs(amount) > 0.01 && m_show_transaction)
     {
-        std::cout << std::format("   {:10} Amt: {:7.2f}, {}\n", m_name, amount, description);
+        std::cout << std::format("   {:10} Amt: {:>9.2f}, {}\n", m_name, amount, description);
     }
 }
